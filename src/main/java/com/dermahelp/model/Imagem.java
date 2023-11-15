@@ -22,6 +22,9 @@ public class Imagem {
     @Column(nullable = false)
     private LocalDateTime data;
 
+    @Column(nullable = false)
+    private String resultado;
+
     @ManyToOne
     @ToString.Exclude
     @JoinColumn(name = "cd_usuario")
