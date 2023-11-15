@@ -13,6 +13,10 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -73,6 +77,80 @@ public class UsuarioController {
         var token = tokenService.generateToken(credencial);
         log.info("gerado token");
         return ResponseEntity.ok(token);
+    }
+
+    @CrossOrigin
+    @GetMapping
+    @Operation(
+            summary = "Listar Usuários",
+            description = "Retorna todos os Usuários cadastrados"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuários listados com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Token inválido")
+    })
+    public Page<Usuario> listar(@PageableDefault(size = 5) Pageable pageable) {
+        var listUsuario = usuarioRepository.findAll();
+        int start = (int) pageable.getOffset();
+        int end = (int) (Math.min((start + pageable.getPageSize()), listUsuario.size()));
+        return new PageImpl<Usuario>(listUsuario.subList(start, end), pageable, listUsuario.size());
+    }
+
+    @GetMapping("{id}")
+    @Operation(
+            summary = "Detalhar usuário",
+            description = "Busca um usuário por id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário detalhado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Não foi encontrado Usuário com esse ID"),
+            @ApiResponse(responseCode = "403", description = "Token inválido")
+    })
+    public ResponseEntity<Usuario> index(@PathVariable Long id) {
+        log.info("buscando usuario " + id);
+        var result = usuarioRepository.findById(id)
+                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não Encontrado"));
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("{id}")
+    @Operation(
+            summary = "Deletar usuario",
+            description = "Deleta um usuario por id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "usuario deletado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Não foi encontrado usuario com esse ID"),
+            @ApiResponse(responseCode = "403", description = "Token inválido")
+    })
+    public ResponseEntity<Usuario> destroy(@PathVariable Long id){
+        log.info("deletando usuario " + id);
+        var result = usuarioRepository.findById(id)
+                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não Encontrado"));
+        usuarioRepository.delete(result);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("{id}")
+    @Operation(
+            summary = "Editar usuario",
+            description = "Editar um usuario por id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuario atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou faltando"),
+            @ApiResponse(responseCode = "404", description = "Não foi encontrado Usuario com esse ID"),
+            @ApiResponse(responseCode = "403", description = "Token inválido")
+    })
+    public ResponseEntity<Usuario> update(@PathVariable Long id, @RequestBody @Valid Usuario usuario){
+        log.info("atualizando usuario "+id);
+        var result = usuarioRepository.findById(id)
+                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não Encontrado"));
+        usuario.setId(id);
+        usuario.setConsultaList(result.getConsultaList());
+        usuario.setImagemList(result.getImagemList());
+        usuarioRepository.save(usuario);
+        return ResponseEntity.ok(usuario);
     }
 
 }
