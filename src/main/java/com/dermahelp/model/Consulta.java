@@ -3,6 +3,8 @@ package com.dermahelp.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +17,9 @@ public class Consulta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
     private long id;
+
+    @Column(nullable = false)
+    private LocalDateTime data;
 
     @ManyToOne
     @ToString.Exclude
