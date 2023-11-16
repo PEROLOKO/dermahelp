@@ -55,9 +55,14 @@ public class ImagemController {
             @ApiResponse(responseCode = "400", description = "Dados inválidos ou faltando")
     })
     public ResponseEntity<Object> cadastro(@PathVariable Long idUsuario,@ModelAttribute("fileUploadForm") FileUploadForm fileUploadForm) throws IOException {
+        log.info("cadastrando imagem");
+        log.info("carregando arquivo de imagem");
         MultipartFile file = fileUploadForm.getFile();
+        log.info("carregado imagem: "+file.getOriginalFilename());
+        log.info("procurando usuario de id#"+idUsuario);
         var usuarioResult = usuarioRepository.findById(idUsuario)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não Encontrado"));
+        log.info("econtrado usuario: "+usuarioResult.toString());
         Imagem imagem = new Imagem();
         imagem.setName(file.getOriginalFilename());
         imagem.setType(file.getContentType());
@@ -66,7 +71,9 @@ public class ImagemController {
         imagem.setUsuario(usuarioResult);
         // pegar resultado pelo ml
         imagem.setResultado("RESULTADO GERADO PELO ML");
+        log.info("salvando imagem");
         imagemRepository.save(imagem);
+        log.info("imagem salva");
         return ResponseEntity.status(HttpStatus.CREATED).body(imagem);
     }
 
@@ -81,10 +88,12 @@ public class ImagemController {
             @ApiResponse(responseCode = "403", description = "Token inválido")
     })
     public ResponseEntity<?>  getImagemById(@PathVariable Long id){
-
+        log.info("recuperando dados da imagem de id#"+id);
         Optional<Imagem> dbImage = imagemRepository.findById(id);
+        log.info("retornado dados da imagem de id#"+id);
+        log.info("descompactando arquivo de imagem");
         byte[] image = ImageUtil.decompressImage(dbImage.get().getImageData());
-
+        log.info("retornando imagem");
         return ResponseEntity.status(HttpStatus.OK)
                 .contentType(MediaType.valueOf("image/png"))
                 .body(image);
@@ -101,9 +110,11 @@ public class ImagemController {
             @ApiResponse(responseCode = "403", description = "Token inválido")
     })
     public ResponseEntity<?>  getImagemInfoByNId(@PathVariable Long id){
+        log.info("recuperando dados da imagem de id#"+id);
         var dbImage = imagemRepository.findById(id)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Imagem não Encontrado"));
-
+        log.info("retornado dados da imagem de id#"+id);
+        log.info("criando retorno com apenas as informações da imagem");
         Imagem imagem = Imagem.builder()
                 .data(dbImage.getData())
                 .id(id)
@@ -112,7 +123,7 @@ public class ImagemController {
                 .resultado(dbImage.getResultado())
                 .usuario(dbImage.getUsuario())
                 .build();
-
+        log.info("retornando informações da imagem");
         return ResponseEntity.status(HttpStatus.OK)
                 .body(imagem);
     }
@@ -128,13 +139,16 @@ public class ImagemController {
             @ApiResponse(responseCode = "403", description = "Token inválido")
     })
     public Page<Imagem> listar(@PageableDefault(size = 5) Pageable pageable) {
+        log.info("recuperando todas imagens");
         var list = imagemRepository.findAll();
-        for (Imagem imagem :
-                list) {
+        log.info("tirando dados da imagen para retornar a lista");
+        for (Imagem imagem : list) {
             imagem.setImageData(null);
         }
+        log.info("criando paginação");
         int start = (int) pageable.getOffset();
         int end = (int) (Math.min((start + pageable.getPageSize()), list.size()));
+        log.info("retornando imagens");
         return new PageImpl<Imagem>(list.subList(start, end), pageable, list.size());
     }
 
