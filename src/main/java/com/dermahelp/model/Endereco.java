@@ -1,7 +1,9 @@
 package com.dermahelp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Data
@@ -22,7 +24,7 @@ public class Endereco {
     private String logradouro;
 
     @Column(nullable = false)
-    @NotEmpty(message = "Numero é obrigatório.")
+    @NotNull(message = "Numero é obrigatório.")
     private int numero;
 
     private String complemento;
@@ -40,6 +42,8 @@ public class Endereco {
     private String cep;
 
     @OneToOne(mappedBy = "endereco")
+    @JsonIgnore
+    @ToString.Exclude
     private Consultorio consultorio;
 
 }
