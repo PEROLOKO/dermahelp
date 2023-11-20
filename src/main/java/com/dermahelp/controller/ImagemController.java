@@ -2,10 +2,12 @@ package com.dermahelp.controller;
 
 import com.dermahelp.model.FileUploadForm;
 import com.dermahelp.model.Imagem;
+import com.dermahelp.model.ResultForm;
 import com.dermahelp.model.Usuario;
 import com.dermahelp.repository.ImagemRepository;
 import com.dermahelp.repository.UsuarioRepository;
 import com.dermahelp.service.ImageUtil;
+import com.dermahelp.service.MLService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -45,6 +47,9 @@ public class ImagemController {
     @Autowired
     ImagemRepository imagemRepository;
 
+    @Autowired
+    MLService mlService;
+
     @PostMapping("{idUsuario}")
     @Operation(
             summary = "Cadastro de uma imagem",
@@ -54,7 +59,7 @@ public class ImagemController {
             @ApiResponse(responseCode = "201", description = "Imagem cadastrado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos ou faltando")
     })
-    public ResponseEntity<Object> cadastro(@PathVariable Long idUsuario,@ModelAttribute("fileUploadForm") FileUploadForm fileUploadForm) throws IOException {
+    public ResponseEntity<Object> cadastro(@PathVariable Long idUsuario,@ModelAttribute("fileUploadForm") FileUploadForm fileUploadForm) throws IOException, InterruptedException {
         log.info("cadastrando imagem");
         log.info("carregando arquivo de imagem");
         MultipartFile file = fileUploadForm.getFile();
@@ -64,13 +69,14 @@ public class ImagemController {
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não Encontrado"));
         log.info("econtrado usuario: "+usuarioResult.toString());
         Imagem imagem = new Imagem();
-        imagem.setName(file.getOriginalFilename());
-        imagem.setType(file.getContentType());
-        imagem.setImageData(ImageUtil.compressImage(file.getBytes()));
+        imagem.setFileName(file.getOriginalFilename());
+        imagem.setFileType(file.getContentType());
+        imagem.setFileData(ImageUtil.compressImage(file.getBytes()));
         imagem.setData(LocalDateTime.now());
         imagem.setUsuario(usuarioResult);
-        // pegar resultado pelo ml
-        imagem.setResultado("RESULTADO GERADO PELO ML");
+        ResultForm resultado = mlService.generateResult(file);
+        imagem.setResultado(resultado.getResult());
+        imagem.setInfo(resultado.getInfo());
         log.info("salvando imagem");
         imagemRepository.save(imagem);
         log.info("imagem salva");
@@ -92,7 +98,7 @@ public class ImagemController {
         Optional<Imagem> dbImage = imagemRepository.findById(id);
         log.info("retornado dados da imagem de id#"+id);
         log.info("descompactando arquivo de imagem");
-        byte[] image = ImageUtil.decompressImage(dbImage.get().getImageData());
+        byte[] image = ImageUtil.decompressImage(dbImage.get().getFileData());
         log.info("retornando imagem");
         return ResponseEntity.status(HttpStatus.OK)
                 .contentType(MediaType.valueOf("image/png"))
@@ -118,9 +124,10 @@ public class ImagemController {
         Imagem imagem = Imagem.builder()
                 .data(dbImage.getData())
                 .id(id)
-                .name(dbImage.getName())
-                .type(dbImage.getType())
+                .fileName(dbImage.getFileName())
+                .fileType(dbImage.getFileType())
                 .resultado(dbImage.getResultado())
+                .info(dbImage.getInfo())
                 .usuario(dbImage.getUsuario())
                 .build();
         log.info("retornando informações da imagem");
@@ -143,7 +150,7 @@ public class ImagemController {
         var list = imagemRepository.findAll();
         log.info("tirando dados da imagen para retornar a lista");
         for (Imagem imagem : list) {
-            imagem.setImageData(null);
+            imagem.setFileData(null);
         }
         log.info("criando paginação");
         int start = (int) pageable.getOffset();

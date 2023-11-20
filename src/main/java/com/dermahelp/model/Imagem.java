@@ -21,18 +21,21 @@ public class Imagem {
     private long id;
 
     @Lob
-    @Column(name = "imagedata", length = 1000)
-    private byte[] imageData;
+    @Column(name = "fileData", length = 1000)
+    private byte[] fileData;
 
-    private String name;
+    private String fileName;
 
-    private String type;
+    private String fileType;
 
     @Column(nullable = false)
     private LocalDateTime data;
 
     @Column(nullable = false)
     private String resultado;
+
+    @Column(nullable = false, length = 500)
+    private String info;
 
     @ManyToOne
     @ToString.Exclude
