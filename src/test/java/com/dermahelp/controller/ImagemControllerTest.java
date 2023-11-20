@@ -94,7 +94,7 @@ public class ImagemControllerTest {
     // — Cria o token com createToken()
     // — Resgata a imagem "tester.jpg"
     // — Faz a chamada POST na API com a imagem e o id do usuário criado com o token
-    // — Verifica se o código foi 200
+    // — Verifica se o código foi 201
     // — Verifica se a imagem foi criada
     public void withUsuarioAndImageFile_whenImagePost_shouldBeSaved() throws Exception {
 
