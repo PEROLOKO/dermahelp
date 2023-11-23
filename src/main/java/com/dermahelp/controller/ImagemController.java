@@ -8,6 +8,7 @@ import com.dermahelp.repository.ImagemRepository;
 import com.dermahelp.repository.UsuarioRepository;
 import com.dermahelp.service.ImageUtil;
 import com.dermahelp.service.MLService;
+import com.dermahelp.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -50,6 +51,9 @@ public class ImagemController {
     @Autowired
     MLService mlService;
 
+    @Autowired
+    TokenService tokenService;
+
     @PostMapping("{idUsuario}")
     @Operation(
             summary = "Cadastro de uma imagem",
@@ -59,14 +63,13 @@ public class ImagemController {
             @ApiResponse(responseCode = "201", description = "Imagem cadastrado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos ou faltando")
     })
-    public ResponseEntity<Object> cadastro(@PathVariable Long idUsuario,@ModelAttribute("fileUploadForm") FileUploadForm fileUploadForm) throws IOException, InterruptedException {
+    public ResponseEntity<Object> cadastro(@RequestHeader("Authorization") String header, @ModelAttribute("fileUploadForm") FileUploadForm fileUploadForm) throws IOException, InterruptedException {
         log.info("cadastrando imagem");
         log.info("carregando arquivo de imagem");
         MultipartFile file = fileUploadForm.getFile();
         log.info("carregado imagem: "+file.getOriginalFilename());
-        log.info("procurando usuario de id#"+idUsuario);
-        var usuarioResult = usuarioRepository.findById(idUsuario)
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não Encontrado"));
+        log.info("procurando usuario do token");
+        var usuarioResult = tokenService.validate(tokenService.getToken(header));
         log.info("econtrado usuario: "+usuarioResult.toString());
         Imagem imagem = new Imagem();
         imagem.setFileName(file.getOriginalFilename());
@@ -145,9 +148,11 @@ public class ImagemController {
             @ApiResponse(responseCode = "200", description = "Imagens listadas com sucesso"),
             @ApiResponse(responseCode = "403", description = "Token inválido")
     })
-    public Page<Imagem> listar(@PageableDefault(size = 5) Pageable pageable) {
-        log.info("recuperando todas imagens");
-        var list = imagemRepository.findAll();
+    public Page<Imagem> listar(@RequestHeader("Authorization") String header, @PageableDefault(size = 5) Pageable pageable) {
+        log.info("recuperando todas imagens do usuario");
+        log.info("procurando usuario do token");
+        var usuarioResult = tokenService.validate(tokenService.getToken(header));
+        var list = imagemRepository.findByUsuario(usuarioResult);
         log.info("tirando dados da imagen para retornar a lista");
         for (Imagem imagem : list) {
             imagem.setFileData(null);
