@@ -54,7 +54,8 @@ public class ImagemController {
     @Autowired
     TokenService tokenService;
 
-    @PostMapping("{idUsuario}")
+    @PostMapping
+    @CrossOrigin
     @Operation(
             summary = "Cadastro de uma imagem",
             description = "Cadastra uma imagem no banco"
@@ -63,10 +64,9 @@ public class ImagemController {
             @ApiResponse(responseCode = "201", description = "Imagem cadastrado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos ou faltando")
     })
-    public ResponseEntity<Object> cadastro(@RequestHeader("Authorization") String header, @ModelAttribute("fileUploadForm") FileUploadForm fileUploadForm) throws IOException, InterruptedException {
+    public ResponseEntity<Object> cadastro(@RequestHeader("Authorization") String header, @RequestParam("pic") MultipartFile file) throws IOException, InterruptedException {
         log.info("cadastrando imagem");
         log.info("carregando arquivo de imagem");
-        MultipartFile file = fileUploadForm.getFile();
         log.info("carregado imagem: "+file.getOriginalFilename());
         log.info("procurando usuario do token");
         var usuarioResult = tokenService.validate(tokenService.getToken(header));
@@ -87,6 +87,7 @@ public class ImagemController {
     }
 
     @GetMapping("{id}")
+    @CrossOrigin
     @Operation(
             summary = "Ver Imagem",
             description = "Busca uma Imagem por id"
@@ -109,6 +110,7 @@ public class ImagemController {
     }
 
     @GetMapping("/info/{id}")
+    @CrossOrigin
     @Operation(
             summary = "Ver informações da Imagem",
             description = "Busca informações de uma Imagem pelo id"
