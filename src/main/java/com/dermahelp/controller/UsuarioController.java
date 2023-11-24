@@ -113,6 +113,23 @@ public class UsuarioController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("user")
+    @Operation(
+            summary = "Próprio usuário",
+            description = "Busca um usuário pelo token"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuário detalhado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Não foi encontrado Usuário com esse ID"),
+            @ApiResponse(responseCode = "403", description = "Token inválido")
+    })
+    public ResponseEntity<Usuario> userToken(@RequestHeader("Authorization") String header) {
+        log.info("procurando usuario do token");
+        var usuarioResult = tokenService.validate(tokenService.getToken(header));
+        log.info("econtrado usuario: "+usuarioResult.toString());
+        return ResponseEntity.ok(usuarioResult);
+    }
+
     @DeleteMapping("{id}")
     @Operation(
             summary = "Deletar usuario",
