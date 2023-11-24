@@ -1,6 +1,4 @@
-FROM openjdk:19-jdk-alpine
-WORKDIR /dermahelp
-VOLUME /main-app
-ADD target/dermahelp-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE 8080
-ENTRYPOINT [ "java", "-jar", "/dermahelp/app.jar" ]
+FROM eclipse-temurin:17
+RUN mkdir /opt/app
+COPY ./target/*.jar /opt/app/app.jar
+CMD ["java", "-jar", "/opt/app/app.jar"]
