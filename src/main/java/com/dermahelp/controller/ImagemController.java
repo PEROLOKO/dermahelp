@@ -83,6 +83,7 @@ public class ImagemController {
         log.info("salvando imagem");
         imagemRepository.save(imagem);
         log.info("imagem salva");
+        imagem.setFileData(null);
         return ResponseEntity.status(HttpStatus.CREATED).body(imagem);
     }
 
@@ -105,7 +106,7 @@ public class ImagemController {
         byte[] image = ImageUtil.decompressImage(dbImage.get().getFileData());
         log.info("retornando imagem");
         return ResponseEntity.status(HttpStatus.OK)
-                .contentType(MediaType.valueOf("image/png"))
+                .contentType(MediaType.valueOf("image/jpeg"))
                 .body(image);
     }
 

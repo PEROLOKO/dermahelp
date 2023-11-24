@@ -6,6 +6,7 @@ import com.dermahelp.repository.ConsultaRepository;
 import com.dermahelp.repository.ConsultorioRepository;
 import com.dermahelp.repository.MedicoRepository;
 import com.dermahelp.repository.UsuarioRepository;
+import com.dermahelp.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -44,6 +45,9 @@ public class ConsultaController {
     @Autowired
     ConsultorioRepository consultorioRepository;
 
+    @Autowired
+    TokenService tokenService;
+
     @PostMapping
     @Operation(
             summary = "Cadastro de uma Consulta",
@@ -53,11 +57,11 @@ public class ConsultaController {
             @ApiResponse(responseCode = "201", description = "Consulta cadastrada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos ou faltando")
     })
-    public ResponseEntity<Object> cadastro(@RequestBody @Valid Consulta consulta) {
+    public ResponseEntity<Object> cadastro(@RequestHeader("Authorization") String header, @RequestBody @Valid Consulta consulta) {
         log.info("cadastrando consulta");
-        log.info("prodcurando usuario");
-        var usuarioResult = usuarioRepository.findById(consulta.getUsuario().getId())
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario não Encontrado"));
+        log.info("procurando usuario do token");
+        var usuarioResult = tokenService.validate(tokenService.getToken(header));
+        log.info("econtrado usuario: "+usuarioResult.toString());
         log.info("prodcurando medico");
         var medicoResult = medicoRepository.findById(consulta.getMedico().getId())
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "Médico não Encontrado"));
